@@ -58,9 +58,9 @@
       state: started
       enabled: yes
 
-  - name: copy mongodb service file
+  - name: copy mongo service file
     ansible.builtin.copy:
-      src: mongodb.repo
+      src: mongo.repo
       dest: /etc/yum.repos.d/mongo.repo
 
   - name: install mongodb client
