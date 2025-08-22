@@ -5,7 +5,7 @@
   - name: disable nodejs
     ansible.builtin.command: dnf module disable nodejs -y
 
-  - name: enable nodejs:20 -y
+  - name: enable nodejs:20 
     ansible.builtin.command: dnf module enable nodejs:20 -y
 
   - name: install nodejs
@@ -39,7 +39,7 @@
   - name: install dependencies
     community.general.npm:
       path: /app
-      
+
   - name: copy cart service file
     ansible.builtin.copy:
       src: cart.service
