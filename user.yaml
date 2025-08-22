@@ -38,7 +38,6 @@
 
   - name: install dependencies
     community.general.npm:
-      name: npm install
       path: /app
 
   - name: copy user service file
