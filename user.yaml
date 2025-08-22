@@ -47,7 +47,7 @@
       dest: /etc/systemd/system/user.service
 
   - name: systemctl deamon reload
-    ansible.builtin.systemd_sevice:
+    ansible.builtin.systemd_service:
       deamon_reload: true
 
   - name: start and enable user service
