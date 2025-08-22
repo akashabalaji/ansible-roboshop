@@ -38,8 +38,8 @@
 
   - name: install dependencies
     community.general.npm:
-      name: npm install 
-
+      path: /app
+      
   - name: copy cart service file
     ansible.builtin.copy:
       src: cart.service
