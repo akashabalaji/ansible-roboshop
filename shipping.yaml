@@ -57,7 +57,7 @@
       dest: /etc/systemd/system/shipping.service
 
   - name: daemon reload
-    ansible.builtin.systemd_service:
+    ansible.builtin.systemd:
       daemon_reload: true
 
   - name: enable and start shipping
@@ -65,13 +65,6 @@
       name: shipping
       state: started
       enabled: yes
-
-  # - name: connect to mysql using app user
-  #   community.mysql.mysql_info:
-  #     login_user: shipping
-  #     login_password: RoboShop@1
-  #     login_host: mysql.daws84s.site
-  #     login_db: cities
 
   - name: import data
     tags:
