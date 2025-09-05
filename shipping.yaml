@@ -44,4 +44,4 @@
   ansible.builtin.service:
     name: shipping
     state: restarted
-  when: import_result is changed
+  when: import_result.changed
