@@ -1,89 +1,47 @@
-- name: configure shipping component
-  hosts: shipping
-  become: yes
-  tasks:
-  - name: install maven and mysql
-    ansible.builtin.dnf:
-      name: "{{ item }}"
-      state: installed
-    loop:
-    - maven
-    - mysql
-    
-  - name: install PyMySQL and cryptography 
-    ansible.builtin.pip:
-      name: "{{ item }}"
-      executable: pip3.9
-    loop:
-    - cryptography
-    - PyMySQL
+# Preflight: wait for MySQL to be reachable (from shipping host)
+- name: Wait for MySQL to be up
+  ansible.builtin.wait_for:
+    host: mysql.akashabalaji.site
+    port: 3306
+    timeout: 60
 
-  - name: create app directory
-    ansible.builtin.file:
-      path: /app
-      state: directory
+# Try to clear any prior host blocks (uses the new admin user)
+- name: Flush MySQL blocked hosts
+  community.mysql.mysql_query:
+    login_host: mysql.akashabalaji.site
+    login_user: dbadmin
+    login_password: "StrongPass!ChangeMe"
+    query: "FLUSH HOSTS;"
+  register: flush_hosts_result
+  failed_when: false   # don't fail if it wasn't needed
+  run_once: true
 
-  - name: create roboshop system user
-    ansible.builtin.user:
-      name: roboshop
-      shell: /sbin/nologin
-      system: true
-      home: /app
-
-  - name: download shipping code
-    ansible.builtin.get_url:
-      url: https://roboshop-artifacts.s3.amazonaws.com/shipping-v3.zip 
-      dest: /tmp/shipping.zip
-
-  - name: extract shipping code
-    ansible.builtin.unarchive:
-      src: /tmp/shipping.zip
-      dest: /app
-      remote_src: yes
-
-  - name: install maven dependencies
-    ansible.builtin.command: mvn clean package
-    args:
-      chdir: /app
-
-  - name: rename jar file
-    ansible.builtin.command: mv target/shipping-1.0.jar shipping.jar
-    args:
-      chdir: /app
-
-  - name: copy shipping service
-    ansible.builtin.copy:
-      src: shipping.service
-      dest: /etc/systemd/system/shipping.service
-
-  - name: daemon reload
-    ansible.builtin.systemd:
-      daemon_reload: true
-
-  - name: enable and start shipping
-    ansible.builtin.service:
-      name: shipping
-      state: started
-      enabled: yes
-
-  - name: import data
-    tags:
+# Import the SQL files with the admin user (NOT root)
+- name: Import data
+  tags:
     - import
-    community.mysql.mysql_db:
-      name: all
-      login_user: root
-      login_password: RoboShop@1
-      login_host: mysql.akashabalaji.site
-      state: import
-      target: "{{ item }}"
-    loop:
+  community.mysql.mysql_db:
+    name: all
+    state: import
+    login_host: mysql.akashabalaji.site
+    login_user: dbadmin
+    login_password: "StrongPass!ChangeMe"
+    target: "{{ item }}"
+    connect_timeout: 30
+  loop:
     - /app/db/schema.sql
     - /app/db/app-user.sql
     - /app/db/master-data.sql
+  retries: 3
+  delay: 5
+  register: import_result
+  until: import_result is succeeded
 
-  - name: restart shipping
-    tags:
+# Restart shipping only if import changed something
+- name: restart shipping
+  tags:
     - import
-    ansible.builtin.service:
-      state: restarted
-      name: shipping
+  ansible.builtin.service:
+    name: shipping
+    state: restarted
+  when: import_result is changed
