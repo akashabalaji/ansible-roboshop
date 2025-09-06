@@ -10,8 +10,6 @@
         - maven
         - mysql
 
-    # ... all your previous tasks (pip install, create app, download, etc.) ...
-
     # Preflight: wait for MySQL to be reachable (from shipping host)
     - name: Wait for MySQL to be up
       ansible.builtin.wait_for:
@@ -24,7 +22,7 @@
       community.mysql.mysql_query:
         login_host: mysql.akashabalaji.site
         login_user: dbadmin
-        login_password: "StrongPass!ChangeMe"
+        login_password: "RoboShop@1"
         query: "FLUSH HOSTS;"
       register: flush_hosts_result
       failed_when: false
@@ -39,7 +37,7 @@
         state: import
         login_host: mysql.akashabalaji.site
         login_user: dbadmin
-        login_password: "StrongPass!ChangeMe"
+        login_password: "RoboShop@1"
         target: "{{ item }}"
         connect_timeout: 30
       loop:
